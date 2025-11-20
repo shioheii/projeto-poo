@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pacientes - Clínica Médica</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="/">Clínica Médica</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link active" href="/src/pages/pacientes.html">Pacientes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/src/pages/medicos.html">Médicos</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Gerenciamento de Pacientes</h2>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#pacienteModal" onclick="abrirModalNovo()">
+        Novo Paciente
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Data Nascimento</th>
+                <th>Telefone</th>
+                <th>Email</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaPacientes">
+              <tr>
+                <td colspan="6" class="text-center">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <nav>
+          <ul class="pagination justify-content-center" id="paginacao"></ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="pacienteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">Novo Paciente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formPaciente">
+            <input type="hidden" id="pacienteId">
+            
+            <div class="mb-3">
+              <label for="nome" class="form-label">Nome *</label>
+              <input type="text" class="form-control" id="nome" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="cpf" class="form-label">CPF *</label>
+              <input type="text" class="form-control" id="cpf" required maxlength="14">
+            </div>
+
+            <div class="mb-3">
+              <label for="dataNascimento" class="form-label">Data de Nascimento *</label>
+              <input type="date" class="form-control" id="dataNascimento" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="telefone" class="form-label">Telefone *</label>
+              <input type="text" class="form-control" id="telefone" required maxlength="15">
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email *</label>
+              <input type="email" class="form-control" id="email" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="endereco" class="form-label">Endereço</label>
+              <textarea class="form-control" id="endereco" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="salvarPaciente()">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/pacientes.js"></script>
+</body>
+</html>

@@ -40,25 +40,29 @@ model Consulta {
   id          String    @id @default(uuid())
   pacienteId  String
   medicoId    String
-  dataHora    DateTime
+  dataHora    DateTime  // Início da consulta
+  dataFim     DateTime  // NOVO: Fim da consulta
   status      String    @default("AGENDADA")
   observacoes String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   paciente    Paciente  @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   medico      Medico    @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  
   @@map("consultas")
 }
 
 model HorarioDisponivel {
   id         String   @id @default(uuid())
   medicoId   String
-  diaSemana  Int
+  data       DateTime  // NOVO: Data específica instead of diaSemana
   horaInicio String
   horaFim    String
   ativo      Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   medico     Medico   @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  
+  @@unique([medicoId, data, horaInicio]) // Garante horários únicos por médico/data
   @@map("horarios_disponiveis")
 }

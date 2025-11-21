@@ -48,10 +48,9 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
-      <a class="navbar-brand" href="/">Clínica Médica</a>
+      <a class="navbar-brand" href="/">🏥 Clínica Médica</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -61,7 +60,13 @@
             <a class="nav-link" href="/src/pages/pacientes.html">Pacientes</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" href="/src/pages/medicos.html">Médicos</a>
+            <a class="nav-link" href="/src/pages/medicos.html">Médicos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/src/pages/consultas.html">Agendamentos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/src/pages/horarios.html">Horários</a>
           </li>
         </ul>
       </div>
@@ -72,7 +77,7 @@
   <section class="hero-section">
     <div class="container">
       <h1 class="display-4 fw-bold mb-4">Bem-vindo ao Sistema Clínica Médica</h1>
-      <p class="lead mb-4">Sistema completo para gestão de pacientes, médicos e consultas</p>
+      <p class="lead mb-4">Sistema para gestão de pacientes, médicos e consultas</p>
       <div class="row justify-content-center">
         <div class="col-md-8">
           <div class="d-flex gap-3 justify-content-center flex-wrap">
@@ -129,7 +134,7 @@
 
       <!-- Card Consultas -->
       <div class="col-md-6">
-        <div class="card card-feature" onclick="navegarPara('#')">
+        <div class="card card-feature" onclick="navegarPara('consultas')">
           <div class="card-body text-center">
             <div class="icon-container">
               <i>📅</i>
@@ -139,9 +144,6 @@
               Sistema de agendamento de consultas médicas. 
               Gerencie horários, salas e disponibilidade dos profissionais.
             </p>
-            <div class="mt-3">
-              <span class="badge bg-secondary">Em breve</span>
-            </div>
           </div>
         </div>
       </div>
@@ -163,6 +165,8 @@
         window.location.href = '/src/pages/pacientes.html';
       } else if (modulo === 'medicos') {
         window.location.href = '/src/pages/medicos.html';
+      } else if (modulo === 'consultas') {
+        window.location.href = '/src/pages/consultas.html';
       }
     }
   </script>

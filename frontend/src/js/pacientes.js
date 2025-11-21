@@ -39,8 +39,12 @@ function renderizarTabela(pacientes) {
       <td>${formatarTelefone(p.telefone)}</td>
       <td>${p.email}</td>
       <td>
-        <button class="btn btn-sm btn-warning" onclick="editarPaciente('${p.id}')">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="excluirPaciente('${p.id}')">Excluir</button>
+        <button class="btn btn-sm btn-outline-warning me-1" onclick="editarPaciente('${p.id}')">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="excluirPaciente('${p.id}')">
+          <i class="bi bi-trash"></i>
+        </button>
       </td>
     </tr>
   `).join('');
@@ -92,9 +96,9 @@ async function editarPaciente(id) {
     document.getElementById('modalTitle').textContent = 'Editar Paciente';
     document.getElementById('pacienteId').value = paciente.id;
     document.getElementById('nome').value = paciente.nome;
-    document.getElementById('cpf').value = paciente.cpf;
+    document.getElementById('cpf').value = formatarCPF(paciente.cpf);
     document.getElementById('dataNascimento').value = paciente.dataNascimento.split('T')[0];
-    document.getElementById('telefone').value = paciente.telefone;
+    document.getElementById('telefone').value = formatarTelefone(paciente.telefone);
     document.getElementById('email').value = paciente.email;
     document.getElementById('endereco').value = paciente.endereco || '';
 

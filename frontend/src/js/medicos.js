@@ -1,4 +1,4 @@
-const API_URL_MEDICOS = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3000/api';
 let paginaAtualMedicos = 1;
 let modalBootstrapMedicos;
 
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function carregarMedicos(pagina) {
   try {
-    const response = await fetch(`${API_URL_MEDICOS}/medicos?page=${pagina}`);
+    const response = await fetch(`${API_URL}/medicos?page=${pagina}`);
     const data = await response.json();
 
     renderizarTabelaMedicos(data.data);
@@ -36,11 +36,15 @@ function renderizarTabelaMedicos(medicos) {
       <td>${m.nome}</td>
       <td>${m.crm}</td>
       <td>${m.especialidade}</td>
-      <td>${formatarTelefoneMedico(m.telefone)}</td>
+      <td>${formatarTelefone(m.telefone)}</td>
       <td>${m.email}</td>
       <td>
-        <button class="btn btn-sm btn-warning" onclick="editarMedico('${m.id}')">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="excluirMedico('${m.id}')">Excluir</button>
+        <button class="btn btn-sm btn-outline-warning me-1" onclick="editarMedico('${m.id}')">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="excluirMedico('${m.id}')">
+          <i class="bi bi-trash"></i>
+        </button>
       </td>
     </tr>
   `).join('');
@@ -83,7 +87,7 @@ function abrirModalNovo() {
 
 async function editarMedico(id) {
   try {
-    const response = await fetch(`${API_URL_MEDICOS}/medicos/${id}`);
+    const response = await fetch(`${API_URL}/medicos/${id}`);
     const medico = await response.json();
 
     document.getElementById('modalTitle').textContent = 'Editar Médico';
@@ -91,7 +95,7 @@ async function editarMedico(id) {
     document.getElementById('nome').value = medico.nome;
     document.getElementById('crm').value = medico.crm;
     document.getElementById('especialidade').value = medico.especialidade;
-    document.getElementById('telefone').value = medico.telefone;
+    document.getElementById('telefone').value = formatarTelefone(medico.telefone);
     document.getElementById('email').value = medico.email;
 
     modalBootstrapMedicos.show();
@@ -118,7 +122,7 @@ async function salvarMedico() {
   };
 
   try {
-    const url = id ? `${API_URL_MEDICOS}/medicos/${id}` : `${API_URL_MEDICOS}/medicos`;
+    const url = id ? `${API_URL}/medicos/${id}` : `${API_URL}/medicos`;
     const method = id ? 'PUT' : 'POST';
 
     const response = await fetch(url, {
@@ -144,7 +148,7 @@ async function excluirMedico(id) {
   if (!confirm('Deseja realmente excluir este médico?')) return;
 
   try {
-    const response = await fetch(`${API_URL_MEDICOS}/medicos/${id}`, {
+    const response = await fetch(`${API_URL}/medicos/${id}`, {
       method: 'DELETE'
     });
 
@@ -157,7 +161,7 @@ async function excluirMedico(id) {
   }
 }
 
-function formatarTelefoneMedico(tel) {
+function formatarTelefone(tel) {
   if (tel.length === 11) {
     return tel.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
   }

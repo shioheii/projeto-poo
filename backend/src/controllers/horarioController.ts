@@ -77,7 +77,7 @@ export const horarioController = {
       const dataFinal = new Date(dataFim);
 
       while (dataAtual <= dataFinal) {
-        if (diasDaSemana.includes(dataAtual.getDay())) {
+        if (diasDaSemana.includes(dataAtual.getUTCDay())) {
           slots.forEach(slot => {
             horariosParaCriar.push({
               medicoId,

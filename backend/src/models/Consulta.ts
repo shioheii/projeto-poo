@@ -211,20 +211,77 @@ export class Consulta extends BaseModel<ConsultaPrisma> {
     }
   }
 
-  async findByPaciente(pacienteId: string): Promise<ConsultaPrisma[]> {
+  async findByPaciente(
+    pacienteId: string, 
+    pagina: number = 1, 
+    limite: number = 10,
+    data?: string,
+    status?: string
+  ): Promise<{ consultas: ConsultaPrisma[]; total: number; paginas: number }> {
     try {
-      return await this.prisma.consulta.findMany({
-        where: { pacienteId },
-        include: {
-          medico: true,
-          horario: true
-        },
-        orderBy: {
-          horario: {
-            data: 'desc'
+      const skip = (pagina - 1) * limite;
+      
+      // Construir where clause
+      const where: any = { pacienteId };
+      
+      // Filtro por data específica
+      if (data) {
+        const dataInicio = new Date(data);
+        const dataFim = new Date(dataInicio);
+        dataFim.setDate(dataFim.getDate() + 1); // Próximo dia para pegar até 23:59:59
+        
+        where.horario = {
+          data: {
+            gte: dataInicio,
+            lt: dataFim
           }
-        }
-      });
+        };
+      }
+      
+      // Filtro por status
+      if (status) {
+        where.status = status;
+      }
+
+      const [consultas, total] = await Promise.all([
+        this.prisma.consulta.findMany({
+          where,
+          include: {
+            medico: {
+              select: {
+                id: true,
+                nome: true,
+                especialidade: true,
+                crm: true
+              }
+            },
+            horario: {
+              select: {
+                id: true,
+                data: true,
+                horaInicio: true,
+                horaFim: true
+              }
+            }
+          },
+          orderBy: {
+            horario: {
+              data: 'desc'
+            }
+          },
+          skip,
+          take: limite
+        }),
+        this.prisma.consulta.count({ where })
+      ]);
+
+      const paginas = Math.ceil(total / limite);
+
+      return {
+        consultas,
+        total,
+        paginas
+      };
     } catch (error: any) {
       throw new Error(`Erro ao buscar consultas do paciente: ${error.message}`);
     }

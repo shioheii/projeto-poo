@@ -11,16 +11,19 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
       <a class="navbar-brand" href="/">🏥 Clínica Médica</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/src/pages/pacientes.html">Pacientes</a>
+            <a class="nav-link" href="/src/pages/pacientes.html"><i class="bi bi-people"></i> Pacientes</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/src/pages/medicos.html">Médicos</a>
+            <a class="nav-link" href="/src/pages/medicos.html"><i class="bi bi-person-badge"></i> Médicos</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" href="/src/pages/consultas.html">Agendamentos</a>
+            <a class="nav-link active" href="/src/pages/consultas.html"><i class="bi bi-calendar-check"></i> Consultas</a>
           </li>
         </ul>
       </div>

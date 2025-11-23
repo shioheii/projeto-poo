@@ -117,8 +117,28 @@ export const consultaController = {
   async findByPaciente(req: Request, res: Response) {
     try {
       const { pacienteId } = req.params;
-      const consultas = await consultaModel.findByPaciente(pacienteId);
-      res.json(consultas);
+      const { 
+        pagina = 1, 
+        limite = 10, 
+        data, 
+        status 
+      } = req.query;
+
+      const result = await consultaModel.findByPaciente(
+        pacienteId, 
+        Number(pagina), 
+        Number(limite),
+        data as string,
+        status as string
+      );
+
+      res.json({
+        consultas: result.consultas,
+        total: result.total,
+        paginas: result.paginas,
+        paginaAtual: Number(pagina),
+        limite: Number(limite)
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

@@ -105,9 +105,9 @@ function exibirHorarios(horarios, consultas, statusFiltro) {
         'indisponivel': 'badge-indisponivel'
       }[status];
 
-      const dataString = horario.data.split('T')[0]; // Pega só "2025-11-24"
+      const dataString = horario.data.split('T')[0];
       const [ano, mes, dia] = dataString.split('-');
-      const dataFormatada = `${dia}/${mes}/${ano}`
+      const dataFormatada = `${dia}/${mes}/${ano}`;
 
       html += `
         <div class="col-md-6 col-lg-4 mb-3">
@@ -266,7 +266,6 @@ async function salvarHorariosRecorrentes() {
 
 // Editar horário
 async function editarHorario(id) {
-  // Implementar edição de horário
   const novoStatus = confirm('Deseja ativar/desativar este horário?');
   
   try {

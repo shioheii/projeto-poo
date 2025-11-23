@@ -39,7 +39,7 @@ function renderizarTabela(pacientes) {
       <td>${formatarTelefone(p.telefone)}</td>
       <td>${p.email}</td>
       <td>
-        <button class="btn btn-sm btn-outline-info me-1" onclick="editarPaciente('${p.id}')">
+        <button class="btn btn-sm btn-outline-info me-1" onclick="abrirDetalhesPaciente('${p.id}')">
           <i class="bi bi-eye"></i>
         </button>
         <button class="btn btn-sm btn-outline-warning me-1" onclick="editarPaciente('${p.id}')">
@@ -89,6 +89,10 @@ function abrirModalNovo() {
   document.getElementById('modalTitle').textContent = 'Novo Paciente';
   document.getElementById('formPaciente').reset();
   document.getElementById('pacienteId').value = '';
+}
+
+function abrirDetalhesPaciente(id) {
+  window.location.href = `paciente-detalhes.html?id=${id}`;
 }
 
 async function editarPaciente(id) {

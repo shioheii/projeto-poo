@@ -39,6 +39,9 @@ function renderizarTabelaMedicos(medicos) {
       <td>${formatarTelefone(m.telefone)}</td>
       <td>${m.email}</td>
       <td>
+        <button class="btn btn-sm btn-outline-info me-1" onclick="abrirDetalhesMedico('${m.id}')">
+          <i class="bi bi-eye"></i>
+        </button>
         <button class="btn btn-sm btn-outline-warning me-1" onclick="editarMedico('${m.id}')">
           <i class="bi bi-pencil"></i>
         </button>
@@ -83,6 +86,10 @@ function abrirModalNovo() {
   document.getElementById('modalTitle').textContent = 'Novo Médico';
   document.getElementById('formMedico').reset();
   document.getElementById('medicoId').value = '';
+}
+
+function abrirDetalhesMedico(id) {
+  window.location.href = `medico-detalhes.html?id=${id}`;
 }
 
 async function editarMedico(id) {

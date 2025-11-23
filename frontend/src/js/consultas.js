@@ -9,6 +9,14 @@ document.addEventListener('DOMContentLoaded', function() {
   carregarConsultas();
   carregarMedicos();
   carregarPacientes();
+  
+  // Event listeners
+  document.getElementById('medicoId').addEventListener('change', carregarHorariosDisponiveis);
+  document.getElementById('dataConsulta').addEventListener('change', carregarHorariosDisponiveis);
+  
+  // Definir data mínima como hoje
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('dataConsulta').min = hoje;
 });
 
 // Carregar consultas
@@ -21,6 +29,7 @@ async function carregarConsultas() {
     atualizarTabelaConsultas();
   } catch (error) {
     console.error('Erro ao carregar consultas:', error);
+    showAlert('Erro ao carregar consultas', 'danger');
   }
 }
 
@@ -59,24 +68,32 @@ function atualizarTabelaConsultas() {
     return;
   }
 
-  tbody.innerHTML = consultas.map(consulta => `
-    <tr>
-      <td>${consulta.paciente.nome}</td>
-      <td>${consulta.medico.nome} - ${consulta.medico.especialidade}</td>
-      <td>${new Date(consulta.dataHora).toLocaleString('pt-BR')}</td>
-      <td>
-        <span class="badge ${getBadgeClass(consulta.status)}">${consulta.status}</span>
-      </td>
-      <td>
-        <button class="btn btn-sm btn-outline-primary" onclick="editarConsulta('${consulta.id}')">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button class="btn btn-sm btn-outline-danger" onclick="cancelarConsulta('${consulta.id}')">
-          <i class="bi bi-x-circle"></i>
-        </button>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = consultas.map(consulta => {
+    const dataString = consulta.horario.data.split('T')[0]; // Pega só "2025-11-24"
+    const [ano, mes, dia] = dataString.split('-');
+    
+    const dataFormatada = `${dia}/${mes}/${ano}`
+    const horaFormatada = consulta.horario.horaInicio;
+    
+    return `
+      <tr>
+        <td>${consulta.paciente.nome}</td>
+        <td>${consulta.medico.nome} - ${consulta.medico.especialidade}</td>
+        <td>${dataFormatada} às ${horaFormatada}</td>
+        <td>
+          <span class="badge ${getBadgeClass(consulta.status)}">${consulta.status}</span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-outline-warning" onclick="editarConsulta('${consulta.id}')">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" onclick="cancelarConsulta('${consulta.id}')">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // Atualizar selects
@@ -89,7 +106,9 @@ function atualizarSelectMedicos() {
   ).join('');
   
   selectMedico.innerHTML = '<option value="">Selecione um médico</option>' + options;
-  filtroMedico.innerHTML = '<option value="">Todos os médicos</option>' + options;
+  if (filtroMedico) {
+    filtroMedico.innerHTML = '<option value="">Todos os médicos</option>' + options;
+  }
 }
 
 function atualizarSelectPacientes() {
@@ -102,30 +121,34 @@ function atualizarSelectPacientes() {
   selectPaciente.innerHTML = '<option value="">Selecione um paciente</option>' + options;
 }
 
-// Carregar horários disponíveis
+// Carregar horários disponíveis (slots de 30min)
 async function carregarHorariosDisponiveis() {
   const medicoId = document.getElementById('medicoId').value;
   const data = document.getElementById('dataConsulta').value;
   
+  const selectHorario = document.getElementById('horarioConsulta');
+  
   if (!medicoId || !data) {
-    document.getElementById('horarioConsulta').innerHTML = '<option value="">Selecione médico e data</option>';
+    selectHorario.innerHTML = '<option value="">Selecione médico e data</option>';
     return;
   }
 
   try {
-    const response = await fetch(`${API_URL}/consultas/horarios-disponiveis/${medicoId}/${data}`);
+    const response = await fetch(`${API_URL}/horarios/disponiveis/${medicoId}/${data}`);
     const horarios = await response.json();
-    
-    const selectHorario = document.getElementById('horarioConsulta');
-    selectHorario.innerHTML = horarios.map(horario => 
-      `<option value="${horario}">${horario}</option>`
-    ).join('');
     
     if (horarios.length === 0) {
       selectHorario.innerHTML = '<option value="">Nenhum horário disponível</option>';
+      return;
     }
+    
+    // Cada horário retornado é um objeto com id, horaInicio, horaFim
+    selectHorario.innerHTML = horarios.map(horario => 
+      `<option value="${horario.id}">${horario.horaInicio} - ${horario.horaFim}</option>`
+    ).join('');
   } catch (error) {
     console.error('Erro ao carregar horários:', error);
+    selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
   }
 }
 
@@ -137,18 +160,10 @@ async function agendarConsulta() {
     return;
   }
 
-  const dataConsulta = document.getElementById('dataConsulta').value;
-  const horarioSelecionado = document.getElementById('horarioConsulta').value;
-  
-  // Calcular dataHora e dataFim (assumindo 1 hora de duração)
-  const dataHora = new Date(`${dataConsulta}T${horarioSelecionado}:00`);
-  const dataFim = new Date(dataHora.getTime() + 60 * 60 * 1000); // +1 hora
-
   const consultaData = {
     pacienteId: document.getElementById('pacienteId').value,
     medicoId: document.getElementById('medicoId').value,
-    dataHora: dataHora.toISOString(),
-    dataFim: dataFim.toISOString(), // NOVO
+    horarioId: document.getElementById('horarioConsulta').value, // Agora é o ID do slot
     observacoes: document.getElementById('observacoes').value
   };
 
@@ -161,26 +176,100 @@ async function agendarConsulta() {
       body: JSON.stringify(consultaData)
     });
 
+    const result = await response.json();
+
     if (response.ok) {
       const modal = bootstrap.Modal.getInstance(document.getElementById('consultaModal'));
       modal.hide();
       form.reset();
       carregarConsultas();
-      alert('Consulta agendada com sucesso!');
+      showAlert('Consulta agendada com sucesso!', 'success');
     } else {
-      const error = await response.json();
-      alert('Erro ao agendar consulta: ' + error.error);
+      showAlert('Erro ao agendar consulta: ' + result.error, 'danger');
     }
   } catch (error) {
     console.error('Erro:', error);
-    alert('Erro ao agendar consulta');
+    showAlert('Erro ao agendar consulta', 'danger');
+  }
+}
+
+// Editar consulta
+async function editarConsulta(id) {
+  try {
+    const response = await fetch(`${API_URL}/consultas/${id}`);
+    const consulta = await response.json();
+    
+    // Preencher modal com dados da consulta
+    document.getElementById('consultaId').value = consulta.id;
+    document.getElementById('pacienteId').value = consulta.pacienteId;
+    document.getElementById('medicoId').value = consulta.medicoId;
+    document.getElementById('statusConsulta').value = consulta.status;
+    document.getElementById('observacoesEdit').value = consulta.observacoes || '';
+    
+    // Mostrar modal de edição
+    const modalEdit = new bootstrap.Modal(document.getElementById('editarConsultaModal'));
+    modalEdit.show();
+  } catch (error) {
+    showAlert('Erro ao carregar dados da consulta', 'danger');
+  }
+}
+
+// Salvar edição da consulta
+async function salvarEdicaoConsulta() {
+  const id = document.getElementById('consultaId').value;
+  const status = document.getElementById('statusConsulta').value;
+  const observacoes = document.getElementById('observacoesEdit').value;
+
+  try {
+    const response = await fetch(`${API_URL}/consultas/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status, observacoes })
+    });
+
+    if (response.ok) {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editarConsultaModal'));
+      modal.hide();
+      carregarConsultas();
+      showAlert('Consulta atualizada com sucesso!', 'success');
+    } else {
+      const result = await response.json();
+      showAlert('Erro ao atualizar consulta: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Erro ao atualizar consulta', 'danger');
+  }
+}
+
+// Cancelar consulta
+async function cancelarConsulta(id) {
+  if (!confirm('Deseja realmente cancelar esta consulta?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/consultas/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      carregarConsultas();
+      showAlert('Consulta cancelada com sucesso!', 'success');
+    } else {
+      const result = await response.json();
+      showAlert('Erro ao cancelar consulta: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Erro ao cancelar consulta', 'danger');
   }
 }
 
 // Utilitários
 function getBadgeClass(status) {
   const classes = {
-    'AGENDADA': 'bg-warning',
+    'AGENDADA': 'bg-warning text-dark',
     'CONFIRMADA': 'bg-primary',
     'REALIZADA': 'bg-success',
     'CANCELADA': 'bg-danger'
@@ -188,6 +277,17 @@ function getBadgeClass(status) {
   return classes[status] || 'bg-secondary';
 }
 
-// Event listeners
-document.getElementById('medicoId').addEventListener('change', carregarHorariosDisponiveis);
-document.getElementById('dataConsulta').addEventListener('change', carregarHorariosDisponiveis);
+function showAlert(message, type = 'success') {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+  alertDiv.style.zIndex = '9999';
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.body.appendChild(alertDiv);
+
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 3000);
+}

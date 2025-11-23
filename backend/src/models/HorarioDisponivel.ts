@@ -4,7 +4,7 @@ import { BaseModel } from './BaseModel';
 export interface IHorarioDisponivel {
   id?: string;
   medicoId: string;
-  data: Date; 
+  data: Date;
   horaInicio: string;
   horaFim: string;
   ativo?: boolean;
@@ -23,47 +23,6 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
       this.validateHorario(data.horaInicio, data.horaFim);
       this.validateData(data.data);
 
-      // Verificar se já existe horário para o mesmo médico, data e horário
-      const horarioExistente = await this.prisma.horarioDisponivel.findFirst({
-        where: {
-          medicoId: data.medicoId,
-          data: data.data,
-          horaInicio: data.horaInicio,
-          horaFim: data.horaFim
-        }
-      });
-
-      if (horarioExistente) {
-        throw new Error('Já existe um horário cadastrado para esta data e período');
-      }
-
-      // Verificar sobreposição de horários
-      const sobreposicao = await this.prisma.horarioDisponivel.findFirst({
-        where: {
-          medicoId: data.medicoId,
-          data: data.data,
-          ativo: true,
-          OR: [
-            {
-              horaInicio: { lte: data.horaInicio },
-              horaFim: { gt: data.horaInicio }
-            },
-            {
-              horaInicio: { lt: data.horaFim },
-              horaFim: { gte: data.horaFim }
-            },
-            {
-              horaInicio: { gte: data.horaInicio },
-              horaFim: { lte: data.horaFim }
-            }
-          ]
-        }
-      });
-
-      if (sobreposicao) {
-        throw new Error('Já existe um horário cadastrado que sobrepõe este período');
-      }
-
       return await this.prisma.horarioDisponivel.create({
         data: {
           medicoId: data.medicoId,
@@ -81,7 +40,18 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
   async findById(id: string): Promise<HorarioDisponivelPrisma | null> {
     try {
       return await this.prisma.horarioDisponivel.findUnique({
-        where: { id }
+        where: { id },
+        include: {
+          consulta: {
+            select: {
+              id: true,
+              paciente: {
+                select: { nome: true }
+              },
+              status: true
+            }
+          }
+        }
       });
     } catch (error: any) {
       throw new Error(`Erro ao buscar horário disponível: ${error.message}`);
@@ -90,14 +60,6 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
 
   async update(id: string, data: Partial<IHorarioDisponivel>): Promise<HorarioDisponivelPrisma> {
     try {
-      if (data.data) {
-        this.validateData(data.data);
-      }
-
-      if (data.horaInicio || data.horaFim) {
-        this.validateHorario(data.horaInicio || '', data.horaFim || '');
-      }
-
       return await this.prisma.horarioDisponivel.update({
         where: { id },
         data: {
@@ -115,6 +77,16 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
 
   async delete(id: string): Promise<void> {
     try {
+      // Verificar se tem consulta vinculada
+      const horario = await this.prisma.horarioDisponivel.findUnique({
+        where: { id },
+        include: { consulta: true }
+      });
+
+      if (horario?.consulta) {
+        throw new Error('Não é possível excluir horário com consulta agendada');
+      }
+
       await this.prisma.horarioDisponivel.delete({
         where: { id }
       });
@@ -126,12 +98,35 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
     }
   }
 
+  async list(page: number = 1, limit: number = 10): Promise<{ data: HorarioDisponivelPrisma[]; total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [data, total] = await Promise.all([
+        this.prisma.horarioDisponivel.findMany({
+          skip,
+          take: limit,
+          orderBy: [
+            { data: 'asc' },
+            { horaInicio: 'asc' }
+          ],
+          include: {
+            medico: true,
+            consulta: true
+          }
+        }),
+        this.prisma.horarioDisponivel.count()
+      ]);
+
+      return { data, total };
+    } catch (error: any) {
+      throw new Error(`Erro ao listar horários disponíveis: ${error.message}`);
+    }
+  }
+
   async listByMedico(medicoId: string, dataInicio?: Date, dataFim?: Date): Promise<HorarioDisponivelPrisma[]> {
     try {
-      const where: any = { 
-        medicoId, 
-        ativo: true 
-      };
+      const where: any = { medicoId };
 
       if (dataInicio || dataFim) {
         where.data = {};
@@ -141,6 +136,17 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
 
       return await this.prisma.horarioDisponivel.findMany({
         where,
+        include: {
+          consulta: {
+            select: {
+              id: true,
+              paciente: {
+                select: { nome: true }
+              },
+              status: true
+            }
+          }
+        },
         orderBy: [
           { data: 'asc' },
           { horaInicio: 'asc' }
@@ -151,7 +157,7 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
     }
   }
 
-  async listByData(medicoId: string, data: Date): Promise<HorarioDisponivelPrisma[]> {
+  async getHorariosDisponiveis(medicoId: string, data: Date): Promise<HorarioDisponivelPrisma[]> {
     try {
       const startOfDay = new Date(data);
       startOfDay.setHours(0, 0, 0, 0);
@@ -166,56 +172,50 @@ export class HorarioDisponivel extends BaseModel<HorarioDisponivelPrisma> {
             gte: startOfDay,
             lte: endOfDay
           },
-          ativo: true
+          ativo: true,
+          consulta: null // Apenas slots sem consulta
         },
         orderBy: { horaInicio: 'asc' }
       });
     } catch (error: any) {
-      throw new Error(`Erro ao listar horários por data: ${error.message}`);
+      throw new Error(`Erro ao buscar horários disponíveis: ${error.message}`);
     }
   }
 
-  async criarHorariosRecorrentes(medicoId: string, dataInicio: Date, dataFim: Date, diasDaSemana: number[], horaInicio: string, horaFim: string): Promise<HorarioDisponivelPrisma[]> {
+  async createMultiple(horarios: IHorarioDisponivel[]): Promise<HorarioDisponivelPrisma[]> {
     try {
-      this.validateHorario(horaInicio, horaFim);
-      
       const horariosCriados: HorarioDisponivelPrisma[] = [];
-      const dataAtual = new Date(dataInicio);
 
-      while (dataAtual <= dataFim) {
-        if (diasDaSemana.includes(dataAtual.getDay())) {
-          try {
-            const horario = await this.create({
-              medicoId,
-              data: new Date(dataAtual),
-              horaInicio,
-              horaFim,
-              ativo: true
-            });
-            horariosCriados.push(horario);
-          } catch (error: any) {
-            // Ignora erros de horário duplicado, apenas continua
-            if (!error.message.includes('já existe um horário cadastrado')) {
-              throw error;
+      for (const horario of horarios) {
+        try {
+          // Verificar se já existe
+          const existe = await this.prisma.horarioDisponivel.findFirst({
+            where: {
+              medicoId: horario.medicoId,
+              data: horario.data,
+              horaInicio: horario.horaInicio
             }
+          });
+
+          if (!existe) {
+            const created = await this.create(horario);
+            horariosCriados.push(created);
           }
+        } catch (error) {
+          // Ignora duplicados
         }
-        
-        // Avança para o próximo dia
-        dataAtual.setDate(dataAtual.getDate() + 1);
       }
 
       return horariosCriados;
     } catch (error: any) {
-      throw new Error(`Erro ao criar horários recorrentes: ${error.message}`);
+      throw new Error(`Erro ao criar múltiplos horários: ${error.message}`);
     }
   }
 
   private validateHorario(horaInicio: string, horaFim: string): void {
-    const horaInicioRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    const horaFimRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    const horaRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
-    if (!horaInicioRegex.test(horaInicio) || !horaFimRegex.test(horaFim)) {
+    if (!horaRegex.test(horaInicio) || !horaRegex.test(horaFim)) {
       throw new Error('Formato de horário inválido. Use HH:MM (24h)');
     }
 

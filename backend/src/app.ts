@@ -26,21 +26,19 @@ app.delete('/api/medicos/:id', medicoController.delete);
 
 // Rotas para Consultas
 app.get('/api/consultas', consultaController.list);
+app.get('/api/consultas/medico/:medicoId', consultaController.findByMedico);
+app.get('/api/consultas/paciente/:pacienteId', consultaController.findByPaciente);
 app.get('/api/consultas/:id', consultaController.getById);
 app.post('/api/consultas', consultaController.create);
 app.put('/api/consultas/:id', consultaController.update);
 app.delete('/api/consultas/:id', consultaController.delete);
-app.get('/api/consultas/medico/:medicoId', consultaController.findByMedico);
-app.get('/api/consultas/paciente/:pacienteId', consultaController.findByPaciente);
-app.get('/api/consultas/horarios-disponiveis/:medicoId/:data', consultaController.getHorariosDisponiveis);
 
 // Rotas para Horários Disponíveis
+app.get('/api/horarios/medico/:medicoId', horarioController.listByMedico);
+app.get('/api/horarios/disponiveis/:medicoId/:data', horarioController.getHorariosDisponiveis);
 app.post('/api/horarios', horarioController.create);
 app.post('/api/horarios/recorrentes', horarioController.createRecorrentes);
 app.put('/api/horarios/:id', horarioController.update);
 app.delete('/api/horarios/:id', horarioController.delete);
-app.get('/api/horarios/medico/:medicoId', horarioController.listByMedico);
-app.get('/api/horarios/medico/:medicoId/data/:data', horarioController.listByData);
-app.get('/api/horarios', horarioController.list);
 
 export default app;

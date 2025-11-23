@@ -1,146 +1,11 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '../../../generated/prisma';
-import { HorarioDisponivel } from '../models/HorarioDisponivel';
+import { HorarioDisponivel, IHorarioDisponivel } from '../models/HorarioDisponivel';
 
 const prisma = new PrismaClient();
 const horarioModel = new HorarioDisponivel(prisma);
 
 export const horarioController = {
-   async list(req: Request, res: Response) {
-    try {
-      const { medicoId, dataInicio, dataFim, ativo } = req.query;
-
-      // Se não há filtros específicos, busca todos os horários
-      if (!medicoId && !dataInicio && !dataFim) {
-        const horarios = await prisma.horarioDisponivel.findMany({
-          include: {
-            medico: true
-          },
-          orderBy: [
-            { data: 'asc' },
-            { horaInicio: 'asc' }
-          ]
-        });
-        return res.json(horarios);
-      }
-
-      // Se há médicoId, usa o método do model
-      if (medicoId) {
-        const horarios = await horarioModel.listByMedico(
-          medicoId as string,
-          dataInicio ? new Date(dataInicio as string) : undefined,
-          dataFim ? new Date(dataFim as string) : undefined
-        );
-        return res.json(horarios);
-      }
-
-      // Filtro geral sem médico específico
-      const where: any = {};
-
-      if (dataInicio || dataFim) {
-        where.data = {};
-        if (dataInicio) where.data.gte = new Date(dataInicio as string);
-        if (dataFim) where.data.lte = new Date(dataFim as string);
-      }
-
-      if (ativo !== undefined) {
-        where.ativo = ativo === 'true';
-      }
-
-      const horarios = await prisma.horarioDisponivel.findMany({
-        where,
-        include: {
-          medico: true
-        },
-        orderBy: [
-          { data: 'asc' },
-          { horaInicio: 'asc' }
-        ]
-      });
-
-      res.json(horarios);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-  async create(req: Request, res: Response) {
-    try {
-      const { medicoId, data, horaInicio, horaFim, ativo } = req.body;
-
-      const horario = await horarioModel.create({
-        medicoId,
-        data: new Date(data),
-        horaInicio,
-        horaFim,
-        ativo
-      });
-
-      res.status(201).json(horario);
-    } catch (error: any) {
-      if (error.message.includes('já existe um horário') || error.message.includes('Formato de horário inválido')) {
-        return res.status(400).json({ error: error.message });
-      }
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-  async createRecorrentes(req: Request, res: Response) {
-    try {
-      const { medicoId, dataInicio, dataFim, diasDaSemana, horaInicio, horaFim } = req.body;
-
-      const horarios = await horarioModel.criarHorariosRecorrentes(
-        medicoId,
-        new Date(dataInicio),
-        new Date(dataFim),
-        diasDaSemana,
-        horaInicio,
-        horaFim
-      );
-
-      res.status(201).json({
-        message: `${horarios.length} horários criados com sucesso`,
-        horarios
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-  async update(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const { data, horaInicio, horaFim, ativo } = req.body;
-
-      const horario = await horarioModel.update(id, {
-        data: data ? new Date(data) : undefined,
-        horaInicio,
-        horaFim,
-        ativo
-      });
-
-      res.json(horario);
-    } catch (error: any) {
-      if (error.message.includes('não encontrado') || error.message.includes('Formato de horário inválido')) {
-        return res.status(400).json({ error: error.message });
-      }
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-  async delete(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      await horarioModel.delete(id);
-      res.status(204).send();
-    } catch (error: any) {
-      if (error.message.includes('não encontrado')) {
-        return res.status(404).json({ error: error.message });
-      }
-      res.status(500).json({ error: error.message });
-    }
-  },
-
   async listByMedico(req: Request, res: Response) {
     try {
       const { medicoId } = req.params;
@@ -158,13 +23,146 @@ export const horarioController = {
     }
   },
 
-  async listByData(req: Request, res: Response) {
+  async getHorariosDisponiveis(req: Request, res: Response) {
     try {
       const { medicoId, data } = req.params;
-      const horarios = await horarioModel.listByData(medicoId, new Date(data));
+      const horarios = await horarioModel.getHorariosDisponiveis(medicoId, new Date(data));
       res.json(horarios);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
+  },
+
+  async create(req: Request, res: Response) {
+    try {
+      const { medicoId, data, horaInicio, horaFim } = req.body;
+
+      // Gerar slots de 30 minutos
+      const slots = gerarSlots(horaInicio, horaFim);
+      const horariosParaCriar: IHorarioDisponivel[] = slots.map(slot => ({
+        medicoId,
+        data: new Date(data),
+        horaInicio: slot.inicio,
+        horaFim: slot.fim,
+        ativo: true
+      }));
+
+      const horariosCriados = await horarioModel.createMultiple(horariosParaCriar);
+
+      res.status(201).json({
+        message: `${horariosCriados.length} slot(s) criado(s) com sucesso`,
+        horarios: horariosCriados
+      });
+    } catch (error: any) {
+      if (error.message.includes('Formato de horário inválido') || error.message.includes('passadas')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async createRecorrentes(req: Request, res: Response) {
+    try {
+      const { medicoId, dataInicio, dataFim, diasDaSemana, horaInicio, horaFim } = req.body;
+
+      if (!Array.isArray(diasDaSemana) || diasDaSemana.length === 0) {
+        return res.status(400).json({ error: 'Selecione pelo menos um dia da semana' });
+      }
+
+      // Gerar slots de 30 minutos
+      const slots = gerarSlots(horaInicio, horaFim);
+      const horariosParaCriar: IHorarioDisponivel[] = [];
+
+      const dataAtual = new Date(dataInicio);
+      const dataFinal = new Date(dataFim);
+
+      while (dataAtual <= dataFinal) {
+        if (diasDaSemana.includes(dataAtual.getDay())) {
+          slots.forEach(slot => {
+            horariosParaCriar.push({
+              medicoId,
+              data: new Date(dataAtual),
+              horaInicio: slot.inicio,
+              horaFim: slot.fim,
+              ativo: true
+            });
+          });
+        }
+        dataAtual.setDate(dataAtual.getDate() + 1);
+      }
+
+      const horariosCriados = await horarioModel.createMultiple(horariosParaCriar);
+
+      res.status(201).json({
+        message: `${horariosCriados.length} slot(s) criado(s) com sucesso`,
+        horarios: horariosCriados
+      });
+    } catch (error: any) {
+      if (error.message.includes('Formato de horário inválido')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async update(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { ativo } = req.body;
+
+      const horario = await horarioModel.update(id, { ativo });
+      res.json(horario);
+    } catch (error: any) {
+      if (error.message.includes('não encontrado')) {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  async delete(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      await horarioModel.delete(id);
+      res.status(204).send();
+    } catch (error: any) {
+      if (error.message.includes('não encontrado')) {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message.includes('consulta agendada')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
   }
 };
+
+// Função auxiliar para gerar slots de 30 minutos
+function gerarSlots(horaInicio: string, horaFim: string): Array<{ inicio: string; fim: string }> {
+  const slots = [];
+  const [horaIni, minIni] = horaInicio.split(':').map(Number);
+  const [horaFin, minFin] = horaFim.split(':').map(Number);
+
+  let minutoAtual = horaIni * 60 + minIni;
+  const minutoFim = horaFin * 60 + minFin;
+
+  while (minutoAtual < minutoFim) {
+    const proximoMinuto = minutoAtual + 30;
+    
+    if (proximoMinuto <= minutoFim) {
+      const hIni = Math.floor(minutoAtual / 60).toString().padStart(2, '0');
+      const mIni = (minutoAtual % 60).toString().padStart(2, '0');
+      const hFim = Math.floor(proximoMinuto / 60).toString().padStart(2, '0');
+      const mFim = (proximoMinuto % 60).toString().padStart(2, '0');
+
+      slots.push({
+        inicio: `${hIni}:${mIni}`,
+        fim: `${hFim}:${mFim}`
+      });
+    }
+
+    minutoAtual = proximoMinuto;
+  }
+
+  return slots;
+}

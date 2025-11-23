@@ -37,32 +37,35 @@ model Medico {
 }
 
 model Consulta {
-  id          String    @id @default(uuid())
-  pacienteId  String
-  medicoId    String
-  dataHora    DateTime  // Início da consulta
-  dataFim     DateTime  // NOVO: Fim da consulta
-  status      String    @default("AGENDADA")
-  observacoes String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  paciente    Paciente  @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
-  medico      Medico    @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  id             String    @id @default(uuid())
+  pacienteId     String
+  medicoId       String
+  horarioId      String    @unique  // Cada consulta ocupa 1 slot
+  status         String    @default("AGENDADA")
+  observacoes    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  paciente       Paciente           @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  medico         Medico             @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  horario        HorarioDisponivel  @relation(fields: [horarioId], references: [id], onDelete: Cascade)
   
   @@map("consultas")
 }
 
 model HorarioDisponivel {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   medicoId   String
-  data       DateTime  // NOVO: Data específica instead of diaSemana
-  horaInicio String
-  horaFim    String
-  ativo      Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  medico     Medico   @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  data       DateTime  // Data específica
+  horaInicio String    // Ex: "09:00"
+  horaFim    String    // Ex: "09:30" (sempre 30min depois)
+  ativo      Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   
-  @@unique([medicoId, data, horaInicio]) // Garante horários únicos por médico/data
+  medico     Medico     @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  consulta   Consulta?  // Relação 1:1 - se existe consulta, slot está ocupado
+  
+  @@unique([medicoId, data, horaInicio])
   @@map("horarios_disponiveis")
 }

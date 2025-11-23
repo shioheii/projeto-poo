@@ -39,6 +39,9 @@ function renderizarTabela(pacientes) {
       <td>${formatarTelefone(p.telefone)}</td>
       <td>${p.email}</td>
       <td>
+        <button class="btn btn-sm btn-outline-info me-1" onclick="editarPaciente('${p.id}')">
+          <i class="bi bi-eye"></i>
+        </button>
         <button class="btn btn-sm btn-outline-warning me-1" onclick="editarPaciente('${p.id}')">
           <i class="bi bi-pencil"></i>
         </button>

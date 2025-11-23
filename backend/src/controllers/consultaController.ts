@@ -43,42 +43,42 @@ export const consultaController = {
   },
 
   async create(req: Request, res: Response) {
-  try {
-    const { pacienteId, medicoId, dataHora, dataFim, observacoes } = req.body;
+    try {
+      const { pacienteId, medicoId, horarioId, observacoes } = req.body;
 
-    const consulta = await consultaModel.create({
-      pacienteId,
-      medicoId,
-      dataHora: new Date(dataHora),
-      dataFim: new Date(dataFim),
-      observacoes
-    });
+      const consulta = await consultaModel.create({
+        pacienteId,
+        medicoId,
+        horarioId,
+        observacoes
+      });
 
-    res.status(201).json(consulta);
-  } catch (error: any) {
-    if (error.message.includes('já existe uma consulta') || 
-        error.message.includes('não possui horário disponível') ||
-        error.message.includes('não pode ser no passado')) {
-      return res.status(400).json({ error: error.message });
+      res.status(201).json(consulta);
+    } catch (error: any) {
+      if (error.message.includes('já está ocupado') || 
+          error.message.includes('não encontrado') ||
+          error.message.includes('está inativo') ||
+          error.message.includes('não pertence')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
     }
-    res.status(500).json({ error: error.message });
-  }
-},
+  },
 
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { dataHora, status, observacoes } = req.body;
+      const { status, observacoes, horarioId } = req.body;
 
       const consulta = await consultaModel.update(id, {
-        dataHora: dataHora ? new Date(dataHora) : undefined,
         status,
-        observacoes
+        observacoes,
+        horarioId
       });
 
       res.json(consulta);
     } catch (error: any) {
-      if (error.message.includes('não encontrada') || error.message.includes('não pode ser no passado')) {
+      if (error.message.includes('não encontrada') || error.message.includes('já está ocupado')) {
         return res.status(400).json({ error: error.message });
       }
       res.status(500).json({ error: error.message });
@@ -104,7 +104,7 @@ export const consultaController = {
       const { data } = req.query;
 
       const consultas = await consultaModel.findByMedico(
-        medicoId, 
+        medicoId,
         data ? new Date(data as string) : undefined
       );
 
@@ -119,19 +119,6 @@ export const consultaController = {
       const { pacienteId } = req.params;
       const consultas = await consultaModel.findByPaciente(pacienteId);
       res.json(consultas);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-  async getHorariosDisponiveis(req: Request, res: Response) {
-    try {
-      const { medicoId, data } = req.params;
-      const horariosDisponiveis = await consultaModel.getHorariosDisponiveis(
-        medicoId, 
-        new Date(data)
-      );
-      res.json(horariosDisponiveis);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

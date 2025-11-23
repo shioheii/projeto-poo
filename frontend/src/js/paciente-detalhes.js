@@ -96,16 +96,12 @@ function exibirConsultas(consultas) {
       <div class="text-center text-muted py-4">
         <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
         <p class="mt-2">Nenhuma consulta encontrada</p>
-        <small>Tente ajustar os filtros</small>
       </div>
     `;
   } else {
     let html = '';
     
     consultas.forEach(consulta => {
-      const dataString = consulta.horario.data.split('T')[0];
-      const [ano, mes, dia] = dataString.split('-');
-      const dataFormatada = `${dia}/${mes}/${ano}`;
       const horaFormatada = consulta.horario.horaInicio;
       
       const statusClass = {
@@ -127,7 +123,7 @@ function exibirConsultas(consultas) {
               <div class="col-md-8">
                 <h6 class="card-title">Consulta com Dr. ${consulta.medico.nome}</h6>
                 <p class="card-text mb-1">
-                  <i class="bi bi-calendar-event"></i> ${dataFormatada} às ${horaFormatada}
+                  <i class="bi bi-calendar-event"></i> ${formatarData(consulta.horario.data)} às ${horaFormatada}
                 </p>
                 <p class="card-text mb-1">
                   <i class="bi bi-person-badge"></i> ${consulta.medico.especialidade}
@@ -235,7 +231,7 @@ function formatarTelefone(tel) {
 }
 
 function formatarData(dataString) {
-  if (!dataString) return '-';
-  const data = new Date(dataString);
-  return data.toLocaleDateString('pt-BR');
+  const data = dataString.split('T')[0];
+  const [ano, mes, dia] = data.split('-');
+  return `${dia}/${mes}/${ano}`;
 }

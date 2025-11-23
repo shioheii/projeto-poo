@@ -69,7 +69,7 @@ function atualizarTabelaConsultas() {
   }
 
   tbody.innerHTML = consultas.map(consulta => {
-    const dataString = consulta.horario.data.split('T')[0]; // Pega só "2025-11-24"
+    const dataString = consulta.horario.data.split('T')[0];
     const [ano, mes, dia] = dataString.split('-');
     
     const dataFormatada = `${dia}/${mes}/${ano}`

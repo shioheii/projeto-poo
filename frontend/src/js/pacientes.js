@@ -185,7 +185,9 @@ function formatarTelefone(tel) {
 }
 
 function formatarData(data) {
-  return new Date(data).toLocaleDateString('pt-BR');
+  const dataString = data.split('T')[0];
+  const [ano, mes, dia] = dataString.split('-');
+  return `${dia}/${mes}/${ano}`;
 }
 
 // Máscaras de input

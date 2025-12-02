@@ -29,7 +29,6 @@ export abstract class BaseModel<T> {
   }
 
   protected validateCPF(cpf: string): void {
-    // Implementação básica - pode ser expandida
     if (!cpf || cpf.length !== 11) {
       throw new Error('CPF inválido');
     }

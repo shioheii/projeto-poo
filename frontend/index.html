@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clínica Médica - Sistema de Gestão</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .hero-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px 0;
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .card-feature {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: none;
+      cursor: pointer;
+      height: 100%;
+    }
+    
+    .card-feature:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .card-feature .card-body {
+      padding: 2rem;
+    }
+    
+    .icon-container {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+    
+    .icon-container i {
+      font-size: 2rem;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="/">🏥 Clínica Médica</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/src/pages/pacientes.html"><i class="bi bi-people"></i> Pacientes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/src/pages/medicos.html"><i class="bi bi-person-badge"></i> Médicos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/src/pages/consultas.html"><i class="bi bi-calendar-check"></i> Consultas</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <h1 class="display-4 fw-bold">Bem-vindo!</h1>
+      <p class="lead">Sistema para gestão de pacientes, médicos e consultas</p>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="container">
+    <div class="row text-center mb-3">
+      <div class="col-12">
+        <h2 class="fw-bold text-primary">Módulos do Sistema</h2>
+        <p class="text-muted">Selecione um módulo para começar a gerenciar</p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Card Pacientes -->
+      <div class="col">
+        <div class="card card-feature" onclick="navegarPara('pacientes')">
+          <div class="card-body text-center">
+            <div class="icon-container">
+              <i>👥</i>
+            </div>
+            <h4 class="card-title text-primary">Gestão de Pacientes</h4>
+            <p class="card-text text-muted">
+              Cadastre, edite e visualize informações dos pacientes. 
+              Gerencie históricos médicos e dados pessoais de forma segura e organizada.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Médicos -->
+      <div class="col">
+        <div class="card card-feature" onclick="navegarPara('medicos')">
+          <div class="card-body text-center">
+            <div class="icon-container">
+              <i>👨‍⚕️</i>
+            </div>
+            <h4 class="card-title text-primary">Gestão de Médicos</h4>
+            <p class="card-text text-muted">
+              Administre o cadastro de médicos, especialidades e CRMs. 
+              Mantenha atualizado o corpo clínico da clínica.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Consultas -->
+      <div class="col">
+        <div class="card card-feature" onclick="navegarPara('consultas')">
+          <div class="card-body text-center">
+            <div class="icon-container">
+              <i>📅</i>
+            </div>
+            <h4 class="card-title text-primary">Agenda de Consultas</h4>
+            <p class="card-text text-muted">
+              Sistema de agendamento de consultas médicas. 
+              Gerencie horários e disponibilidade dos profissionais.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white py-4 mt-5">
+    <div class="container text-center">
+      <p class="mb-0">&copy; 2025 Clínica Médica. Todos os direitos reservados.</p>
+      <p class="text-muted small mb-0">Sistema de Gestão Médica - Desenvolvido para otimizar processos clínicos</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function navegarPara(modulo) {
+      if (modulo === 'pacientes') {
+        window.location.href = '/src/pages/pacientes.html';
+      } else if (modulo === 'medicos') {
+        window.location.href = '/src/pages/medicos.html';
+      } else if (modulo === 'consultas') {
+        window.location.href = '/src/pages/consultas.html';
+      }
+    }
+  </script>
+</body>
+</html>

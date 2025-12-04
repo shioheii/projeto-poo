@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./database.db"
+}
+
+model Paciente {
+  id              String     @id @default(uuid())
+  nome            String
+  cpf             String     @unique
+  dataNascimento  DateTime
+  telefone        String
+  email           String     @unique
+  endereco        String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  consultas       Consulta[]
+  @@map("pacientes")
+}
+
+model Medico {
+  id              String              @id @default(uuid())
+  nome            String
+  crm             String              @unique
+  especialidade   String
+  telefone        String
+  email           String              @unique
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  consultas       Consulta[]
+  horarios        HorarioDisponivel[]
+  @@map("medicos")
+}
+
+model Consulta {
+  id             String    @id @default(uuid())
+  pacienteId     String
+  medicoId       String
+  horarioId      String    @unique  // Cada consulta ocupa 1 slot
+  status         String    @default("AGENDADA")
+  observacoes    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  paciente       Paciente           @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  medico         Medico             @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  horario        HorarioDisponivel  @relation(fields: [horarioId], references: [id], onDelete: Cascade)
+  
+  @@map("consultas")
+}
+
+model HorarioDisponivel {
+  id         String    @id @default(uuid())
+  medicoId   String
+  data       DateTime  // Data específica
+  horaInicio String    // Ex: "09:00"
+  horaFim    String    // Ex: "09:30" (sempre 30min depois)
+  ativo      Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  
+  medico     Medico     @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  consulta   Consulta?  // Relação 1:1 - se existe consulta, slot está ocupado
+  
+  @@unique([medicoId, data, horaInicio])
+  @@map("horarios_disponiveis")
+}
